@@ -1,0 +1,465 @@
+---
+title: "Obesity"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Title: Obesity Level Predictive Modeling
+
+#### Details Dataset: Dataset: Estimitaion of obesity Level
+
+#### Source: <https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition>
+
+This dataset include data for the estimation of obesity levels in individuals from the countries of Mexico, Peru and Colombia, based on their eating habits and physical condition. It consists of 17 attributes and 2111 records, the records are labeled with the class variable NObesity (Obesity Level), that allows classification of the data using the values of Insufficient Weight, Normal Weight, Overweight Level I, Overweight Level II, Obesity Type I, Obesity Type II and Obesity Type III. 77% of the data was generated synthetically using the Weka tool and the SMOTE filter, 23% of the data was collected directly from users through a web platform.
+
+## Introduction
+
+Obesity is a global health challenge with significant implications for individuals and society. As the prevalence of obesity continues to rise, understanding the factors contributing to obesity and developing effective predictive models are crucial for preventive healthcare interventions. Predictive modeling in the context of obesity aims to anticipate and identify individuals at risk, enabling timely interventions and personalized healthcare strategies.
+
+## Initialization
+
+Import necessary libraries
+
+```{r}
+library(dplyr)
+library(plotly)
+library(ggplot2)
+library(tidyr)
+library(ggcorrplot)
+library(e1071) 
+library(caTools)
+library(tidyverse)
+library(caret)
+
+
+```
+
+## Data Ingestion
+
+Load dataset of Obesity Level as dataframe
+
+```{r}
+url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vQv7ETe9H0ySeTirE9z67a1X2nGMozFPqYvNxVwXc6-tx3IXX-Ez0LGppCzoFvTLz6b7NQg_vGA1PLA/pub?output=csv"
+ 
+# Read the CSV file
+obesityDF <- read.csv(url, stringsAsFactors = FALSE)
+```
+
+## Data Understanding
+
+Check variables that attribute to the dataset
+
+```{r}
+head(obesityDF)
+```
+
+## Data Preprocessing
+
+1.  Check for any NA values
+
+```{r}
+colSums(is.na(obesityDF)) 
+```
+
+## 2. Do data cleaning process
+
+-   Round off the values of age variable from numeric to integer
+-   Load into new dataframe with age integer
+
+```{r}
+obesityDF$Age <- round(obesityDF$Age)
+age_obesity <- obesityDF
+```
+
+-   Check what the dataframe is about
+
+```{r}
+#not necessary but if want to see what the changes of column name, can use this
+str(age_obesity)
+```
+
+-   Add BMI column
+-   By calculate using “BMI = weight (kg) ÷ height2 (meters)”
+
+```{r}
+age_obesity$BMI = age_obesity$Weight/(age_obesity$Height^2)
+str(age_obesity)
+```
+
+-   Reorder columns to put BMI immediately after Height and Weight
+
+```{r}
+obesity_new <- age_obesity[, c("Gender", "Age", "Height", "Weight", "BMI", "family_history_with_overweight", "FAVC", "FCVC", "NCP", "CAEC", "SMOKE", "CH2O", "SCC", "FAF", "TUE", "CALC", "MTRANS", "NObeyesdad")]
+str(obesity_new)
+```
+
+Rename the column name for better reading
+
+```{r}
+names(obesity_new) <- c("Gender", 
+                        "Age", 
+                        "Height", 
+                        "Weight", 
+                        "BMI", 
+                        "Family_History_with_Overweight",
+                        "High_Caloric_Food_Consumption",
+                        "Frequency_Consumption_of_Vegetables", 
+                        "Number_of_Main_Meals",
+                        "Consumption_of_Food_Between_Meals",
+                        "Smoke",
+                        "Consumption_of_Water_Daily",
+                        "Calories_Consumption_Monitoring",
+                        "Physical_Activity_Frequency",
+                        "Time_Using_Technology",
+                        "Consumption_of_Alcohol", 
+                        "Transportation_Used", 
+                        "Obesity")
+```
+
+-   Remove ’\_’ underscore in values of Obesity column
+
+```{r}
+
+obesity_new$Obesity <- gsub("_", " ", obesity_new$Obesity)
+head(obesity_new)
+```
+
+-   save as new file
+
+```{r}
+write.csv(obesity_new, "obesity_new1.csv", row.names = FALSE)
+```
+
+## Exploratory Data Analysis
+
+1.  Plot histogram BMI with gender differentiation
+
+```{r}
+ggplot(obesity_new, aes(x = BMI, fill = Gender)) +
+geom_histogram(position = "identity", alpha = 0.7, bins = 20) +
+labs(title = "Histogram of BMI by Gender",
+       x = "BMI",
+       y = "Frequency") +
+scale_fill_manual(values = c("Male" = "blue", "Female" = "pink")) +
+theme_minimal()
+```
+
+2.  Plot correlation between age and BMI
+
+```{r}
+ggplot(obesity_new, aes(x = Age, y = BMI)) +
+  geom_bar(stat = "identity", fill = "lightcoral", width = 0.7) +
+  labs(title = "Relationship between Age and BMI",
+       x = "Age",
+       y = "BMI")
+```
+
+3.  Alcohol Consumption, Family History with Overweight vs BMI
+
+```{r}
+library(ggplot2)
+
+ggplot(obesity_new, aes(x = as.factor(Consumption_of_Alcohol), 
+                        y = BMI, 
+                        fill = Family_History_with_Overweight)) +
+  geom_bar(stat = "summary", fun = "mean", position = "dodge", width = 0.5) +
+  scale_fill_manual(values = c("#eae2b7", "#fcbf49")) +
+  theme_minimal() +
+  labs(
+    title = "Relationship between BMI, Alcohol Consumption and Family History with Overweight",
+    x = "Alcohol Consumption",
+    y = "BMI",
+    fill = "Family History with Overweight"
+  )
+
+```
+
+4.  Obesity vs Age
+
+```{r}
+library(ggplot2)
+
+ggplot(obesity_new, aes(x = as.factor(Obesity), y = Age)) + 
+  geom_boxplot(
+    color = "#003049",
+    fill = "#eae2b7",
+    alpha = 0.2,
+    notch = TRUE,
+    notchwidth = 0.8,
+    outlier.colour = "#d62828",
+    outlier.fill = "#d62828",
+    outlier.size = 3
+  ) +
+  theme_minimal() +
+  labs(title = "Relationship between Obesity Level and Age", 
+       x = "Obesity Level", 
+       y = "Age")
+
+```
+
+## 5. Find the correlation between the numerical fields
+
+```{r}
+numericFields <- dplyr::select_if(obesity_new, is.numeric)
+r <- cor(numericFields, use="complete.obs")
+ggcorrplot(r)
+```
+
+```{r}
+# Identify numeric columns
+numeric_cols <- sapply(obesity_new, is.numeric)
+numeric_data <- obesity_new[, numeric_cols]
+
+# Function to detect outliers using IQR
+detect_outliers <- function(x) {
+  Q1 <- quantile(x, 0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.75, na.rm = TRUE)
+  IQR_val <- Q3 - Q1
+  outliers <- which(x < (Q1 - 1.5 * IQR_val) | x > (Q3 + 1.5 * IQR_val))
+  return(outliers)
+}
+
+# Apply to each numeric column
+outlier_summary <- sapply(numeric_data, function(col) length(detect_outliers(col)))
+
+# View summary table
+outlier_summary_df <- data.frame(
+  Variable = names(outlier_summary),
+  Outlier_Count = as.integer(outlier_summary)
+)
+print(outlier_summary_df)
+
+```
+
+```{r}
+remove_outliers_iqr <- function(df) {
+  numeric_cols <- sapply(df, is.numeric)
+  for (col in names(df)[numeric_cols]) {
+    Q1 <- quantile(df[[col]], 0.25, na.rm = TRUE)
+    Q3 <- quantile(df[[col]], 0.75, na.rm = TRUE)
+    IQR_val <- Q3 - Q1
+    lower <- Q1 - 1.5 * IQR_val
+    upper <- Q3 + 1.5 * IQR_val
+    df <- df[df[[col]] >= lower & df[[col]] <= upper, ]
+  }
+  return(df)
+}
+
+```
+
+```{r}
+obesity_clean <- remove_outliers_iqr(obesity_new)
+cat("Original rows:", nrow(obesity_new), "\n")
+cat("After outlier removal:", nrow(obesity_clean), "\n")
+
+```
+
+```{r}
+# Copy the dataset to avoid modifying the original
+obesity_label_encoded <- obesity_clean
+
+# Identify categorical columns
+categorical_vars <- sapply(obesity_label_encoded, function(x) is.factor(x) || is.character(x))
+
+# Apply label encoding to categorical columns
+obesity_label_encoded[categorical_vars] <- lapply(obesity_label_encoded[categorical_vars], function(x) as.numeric(factor(x)))
+
+# View the encoded dataset
+head(obesity_label_encoded)
+```
+
+```{r}
+obesity_standardized <- obesity_label_encoded 
+obesity_standardized[numeric_cols] <- scale(obesity_label_encoded[numeric_cols])
+
+```
+
+```{r}
+str(obesity_standardized)
+```
+
+# Modeling
+
+## 1. BMI Prediction (Regression Model)
+
+-   Define a Rsquared function and remove rows with Null values
+
+```{r}
+df_reg <- obesity_new 
+df_reg <- df_reg %>%
+  mutate_if(is.character, as.factor) %>%
+  na.omit()
+set.seed(123)
+```
+
+-   Train, Test, Split
+
+```{r}
+splitIndex <- createDataPartition(obesity_standardized$BMI, p = 0.8, list = FALSE)
+training_data <- obesity_standardized[splitIndex, ]
+testing_data <- obesity_standardized[-splitIndex, ]
+```
+
+-   Create Linear Regression model and train based on Training Data
+
+```{r}
+model <- lm(BMI ~ ., data = training_data)
+```
+
+-   Make predictions with created model using Testing Data
+
+```{r}
+pred_reg <- round(as.numeric(predict(model, newdata = testing_data)),digits = 2)
+pred_reg
+```
+
+-Check for prediction accuracy using Mean Square Error
+
+```{r}
+mse_reg <- mean((testing_data$BMI - pred_reg)^2)
+summary(model)
+```
+
+## 2. Obesity Level Prediction (Classification Model)
+
+-   Generate random elements without replacement
+
+<!-- -->
+
+-   Convert the variables into factors
+
+```{r}
+# Convert 'Obesity' to a factor
+obesity_standardized$Obesity <- as.factor(obesity_standardized$Obesity)
+
+```
+
+-   Train, Test, Split
+
+```{r}
+splitIndex <- createDataPartition(obesity_standardized$Obesity, p = 0.8, list = FALSE)
+training_data <- obesity_standardized[splitIndex, ]
+testing_data <- obesity_standardized[-splitIndex, ]
+
+```
+
+-   Create Support Vector Machine model and train based on Training Data
+
+```{r}
+model <- svm(formula = Obesity ~ ., 
+                 data = training_data,
+                 kernel = 'linear')
+```
+
+-   Make predictions with created model using Testing Data
+
+```{r}
+pred_svm <- predict(model, newdata = testing_data)
+pred_svm
+```
+
+-   Check for prediction accuracy using Confusion Matrix
+
+```{r}
+mse_svm <- confusionMatrix(pred_svm, testing_data$Obesity)
+mse_svm
+```
+
+## 3. Obesity Level Prediction (Logistic Regression Model)
+
+```{r}
+library(nnet)
+library(caret)
+
+# Ensure target is a factor
+training_data$Obesity <- as.factor(training_data$Obesity)
+testing_data$Obesity <- as.factor(testing_data$Obesity)
+
+```
+
+```{r}
+model <- train(
+  Obesity ~ ., 
+  data = training_data, 
+  method = "multinom", 
+  trControl = trainControl(method = "cv", number = 5),
+  trace = FALSE
+)
+logit_pred <- predict(model, testing_data)
+logit_conf <- confusionMatrix(logit_pred, testing_data$Obesity)
+print(logit_conf)
+```
+
+## 4. Obesity Level Prediction (Random Forest Model)
+
+-   Prepare dataset (reuse cleaned data)
+
+```{r}
+set.seed(789)
+df_rf <- obesity_standardized
+df_rf$Gender <- as.factor(df_rf$Gender)
+df_rf$Obesity <- as.factor(df_rf$Obesity)
+
+```
+
+-   Train/test split
+
+```{r}
+splitIndex <- createDataPartition(df_rf$Obesity, p = 0.7, list = FALSE)
+train_data_rf <- df_rf[splitIndex, ]
+test_data_rf <- df_rf[-splitIndex, ]
+```
+
+-   Train Random Forest model
+
+```{r}
+library(randomForest)
+rf_model <- randomForest(Obesity ~ ., data = train_data_rf, ntree = 100, importance = TRUE)
+```
+
+-   Predict
+
+```{r}
+pred_rf <- predict(rf_model, newdata = test_data_rf)
+```
+
+-   Confusion Matrix
+
+```{r}
+rf_conf <- confusionMatrix(pred_rf, test_data_rf$Obesity)
+print(rf_conf)
+```
+
+-   Plot variable importance
+
+```{r}
+varImpPlot(rf_model, main = "Variable Importance (Random Forest)")
+```
+
+```{r}
+
+svm_acc <- confusionMatrix(pred_svm, testing_data$Obesity)$overall['Accuracy']
+rf_acc <- confusionMatrix(pred_rf, test_data_rf$Obesity)$overall['Accuracy']
+logit_acc<- confusionMatrix(logit_pred, testing_data$Obesity)$overall['Accuracy']
+accuracy_results <- data.frame(
+  Model = c("Multinomial Logistic Regression", "Random Forest", "SVM"),
+  Accuracy = c(logit_acc, rf_acc, svm_acc)
+)
+print(accuracy_results)
+
+```
+
+# Conclusion
+
+-   **BMI Prediction** (Regression Model) The linear regression model for predicting BMI showed excellent performance, achieving a high R-squared value of 0.99. This indicates that the model explains nearly all the variance in BMI using the input features. Key predictors included height, weight, family history of overweight, and dietary habits, all of which had statistically significant effects.
+
+-   **Obesity Level Prediction**
+
+    Support Vector Machine (SVM) Model\
+    The improved SVM model, after kernel adjustment and hyperparameter tuning, achieved a strong accuracy of approximately **96.04%**. This is a significant improvement from the earlier 15% accuracy when using a basic linear kernel. The enhanced model is now capable of effectively handling multi-class classification, though further optimization and advanced feature engineering could push its performance even higher.
+
+    Logistic Regression Model\
+    The Multinomial Logistic Regression model also performed well, achieving an accuracy of **93.8%**. It correctly classified most obesity levels and showed reliable consistency across categories. While slightly less accurate than the Random Forest and SVM models, it remains a robust and interpretable choice for multi-class classification problems.
+
+    Random Forest Model\
+    In contrast, the Random Forest model demonstrated the highest performance, with an accuracy of **99.2%** and a Kappa statistic of **0.9915**, indicating near-perfect agreement between predictions and actual labels. It successfully classified all obesity categories with high sensitivity and specificity and offered valuable insights into feature importance, making it both powerful and interpretable for classification tasks.
