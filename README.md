@@ -2,6 +2,11 @@
 
 # Obesity Level Predictive Modeling
 
+## Problem Statement
+Obesity has become a major public health concern worldwide, contributing to increased risks of chronic diseases such as diabetes, heart disease, and certain cancers. Despite numerous efforts to combat obesity, its prevalence continues to rise. The problem lies in understanding what factors contribute most to obesity and how they vary across different populations. There is a need for data-driven insights to identify the key lifestyle, demographic, and environmental factors influencing obesity rates. This project aims to analyze obesity data to uncover these patterns and provide actionable information for healthcare providers and policymakers.
+
+
+
 ##  Project Overview
 
 This project focuses on predicting **Body Mass Index (BMI)** and **Obesity Levels** using demographic, lifestyle, and health-related factors from individuals in Mexico, Peru, and Colombia. The dataset includes both real and synthetically generated records, enabling comprehensive predictive modeling for preventive healthcare interventions.
