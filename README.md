@@ -8,7 +8,7 @@ This project focuses on predicting **Body Mass Index (BMI)** and **Obesity Level
 
 We implemented **data preprocessing, exploratory data analysis (EDA), feature engineering, outlier detection**, and built multiple **machine learning models** to identify key predictors and achieve high classification accuracy.
 
----
+
 
 ##  Dataset
 
@@ -20,7 +20,7 @@ We implemented **data preprocessing, exploratory data analysis (EDA), feature en
   * Lifestyle: Eating habits, physical activity, alcohol consumption, technology usage
   * Health: Family history of overweight, BMI (calculated)
 
----
+
 
 ##  Technologies Used
 
@@ -32,7 +32,7 @@ We implemented **data preprocessing, exploratory data analysis (EDA), feature en
   * Modeling: `caret`, `e1071` (SVM), `randomForest`, `nnet` (Multinomial Logistic Regression)
   * Utility: `caTools`
 
----
+
 
 ##  Project Workflow
 
@@ -66,7 +66,7 @@ We implemented **data preprocessing, exploratory data analysis (EDA), feature en
 | Support Vector Machine (SVM)    | 96.04%     |
 | Multinomial Logistic Regression | 93.88%     |
 
----
+
 
 ## Key Insights
 
