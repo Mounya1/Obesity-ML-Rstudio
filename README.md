@@ -80,5 +80,21 @@ We implemented **data preprocessing, exploratory data analysis (EDA), feature en
 * **Random Forest** outperformed other models in accuracy and interpretability.
 * Outlier removal improved classification performance.
 
+Sure! Here’s a polished **Project Results** summary you can use in your README or documentation:
+
 ---
+
+## Project Results
+
+This project successfully analyzed obesity-related data to identify key factors influencing obesity levels across different populations. Through data preprocessing, exploratory analysis, and predictive modeling, the following outcomes were achieved:
+
+* **Insightful Patterns Discovered:** Clear links were found between lifestyle habits—such as physical activity frequency, diet quality, and transportation choices—and obesity rates.
+* **Effective Data Transformation:** Categorical and numerical data were processed effectively to enable meaningful visualizations and analysis.
+* **Model Performance:** The implemented machine learning models demonstrated strong predictive ability, with the best model achieving an accuracy of **\[99]%** in categorizing obesity levels.
+* **Key Predictors Identified:** Age, dietary habits, physical activity, and sedentary behavior emerged as the most influential factors affecting obesity.
+* **Actionable Recommendations:** The results provide valuable guidance for healthcare professionals and policymakers to develop targeted interventions aimed at reducing obesity prevalence.
+
+Overall, this project highlights the power of data science techniques in addressing public health challenges by extracting actionable insights from complex datasets.
+
+
 
